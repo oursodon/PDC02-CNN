@@ -26,3 +26,12 @@
 *.exe
 *.out
 *.app
+
+# Caffe files
+*.caffemodel
+*.solverstate
+
+test_images/
+test_lmdb/
+train_images/
+train_lmdb/
