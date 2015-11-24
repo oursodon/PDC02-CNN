@@ -7,6 +7,13 @@
 
 import caffe
 import numpy as np
+from skimage.transform import pyramid_gaussian
+import math
+
+def getImagePyramid(image,downScale):
+	rows, cols = image.shape
+	maxLayer = min(math.floor(math.log(rows//36)//math.log(downScale)),math.floor(math.log(cols//36)//math.log(downScale)))
+	return tuple(pyramid_gaussian(image,max_layer=maxLayer, downscale=downScale))
 
 caffe.set_mode_cpu()
 net = caffe.Net("facenet_deploy.prototxt", "facenet_iter_200000.caffemodel", caffe.TEST)
