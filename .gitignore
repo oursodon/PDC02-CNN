@@ -28,7 +28,7 @@
 *.app
 
 # Caffe files
-*.caffemodel
+
 *.solverstate
 
 test_images/
