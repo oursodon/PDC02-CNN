@@ -124,7 +124,7 @@ if __name__ == '__main__':
     threshold = 0.87 #for accepting if an image is a face-image or not
     window_length = 36
     step = 1 # for slicing window
-    image_dir = "../multiple_face/"
+    image_dir = "../multiple_faces/"
     filename = "Japan.jpg" # another example: "ucsd.png"
     filepath = image_dir + filename
     caffemodel = "../facenet_iter_200000.caffemodel"
