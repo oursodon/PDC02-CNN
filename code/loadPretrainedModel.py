@@ -16,10 +16,10 @@ import matplotlib.cm as cm
 import matplotlib.colors as colors
 from sklearn.cluster import DBSCAN
 def get_cmap(N):
-    '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct 
+    '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
     RGB color.'''
     color_norm  = colors.Normalize(vmin=0, vmax=N-1)
-    scalar_map = cm.ScalarMappable(norm=color_norm, cmap='hsv') 
+    scalar_map = cm.ScalarMappable(norm=color_norm, cmap='hsv')
     def map_index_to_rgb_color(index):
         return scalar_map.to_rgba(index)
     return map_index_to_rgb_color
@@ -35,9 +35,9 @@ def getImagePyramid(image,downScale,window_length):
     print "For original image:  => size: "+str(image.size)
     counter=1
     while True:
+        w = int(w * downScale)
+        h = int(h * downScale)
         if w>window_length and h>window_length:
-            w = int(w * downScale)
-            h = int(h * downScale)
             #Image.BICUBIC is one of the methods for resizing => I think it is best
             im = image.resize((w, h), Image.BICUBIC)
             #we can save this intermediate image => im.save("filename.jpeg")
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     image_dir = "../multiple_faces/"
     filename = "Japan.jpg" # another example: "ucsd.png"
     filepath = image_dir + filename
-    caffemodel = "../facenet_iter_200000.caffemodel"
+    caffemodel = "../facenet_iter_400000.caffemodel"
     model = "../facenet_deploy.prototxt"
 
     ###############
