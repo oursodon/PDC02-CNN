@@ -13,6 +13,16 @@ import Image
 import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.colors as colors
+from sklearn.cluster import DBSCAN
+def get_cmap(N):
+    '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct 
+    RGB color.'''
+    color_norm  = colors.Normalize(vmin=0, vmax=N-1)
+    scalar_map = cm.ScalarMappable(norm=color_norm, cmap='hsv') 
+    def map_index_to_rgb_color(index):
+        return scalar_map.to_rgba(index)
+    return map_index_to_rgb_color
 
 def getImagePyramid(image,downScale,window_length):
     # Nejat changed pyramid method because he needs an image instance in processImage() method
@@ -101,7 +111,7 @@ def processImage(imageList,downScale,network,threshold,window_length,step):
                                 +str(scaled_centrum_y)+"\n")
                         # uniqueness of position list
                         if (scaled_centrum_x, scaled_centrum_y) not in facesPosition:
-                            facesPosition.append((scaled_centrum_x, scaled_centrum_y))
+                            facesPosition.append([scaled_centrum_x, scaled_centrum_y])
                         #example: 50/0.8=40 => 40*(1/0.8)=50
             scale_degree += 1 # truc += 1
 
@@ -172,6 +182,12 @@ if __name__ == '__main__':
     # We may do that by an 'Connected Component' algorithm
     # In that algorithm, the decision of creating a new group may be done with euclidian distance or weights
 
+    for position in positions:
+        db = DBSCAN(eps=36, min_samples=10).fit(position)
+        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+        labels = db.labels_
+        print len(postion)
+        print len(labels)
     ### STEP 2 ###
 
     # generating local pyramid based on each centroid found in clustring algorithm
@@ -185,5 +201,9 @@ if __name__ == '__main__':
 
     # Scatter plot for showing each postion on the given image
     implot = plt.imshow(data,cmap = cm.Greys_r)
-    plt.scatter([pos[0] for pos in positions],[pos[1] for pos in positions])
+    #colors = get_cmap(len(imageList))
+    #for pos in positions:
+        #plt.scatter(pos[0],pos[1],c=colors(pos[2]),)
+    for position in positions:
+        plt.scatter([pos[0] for pos in position],[pos[1] for pos in position])
     plt.show()
