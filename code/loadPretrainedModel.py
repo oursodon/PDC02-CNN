@@ -131,13 +131,13 @@ if __name__ == '__main__':
     ##################################
 
     downScale = 0.8
-    threshold = 0.87 #for accepting if an image is a face-image or not
+    threshold = 0.975 #for accepting if an image is a face-image or not
     window_length = 36
     step = 1 # for slicing window
     image_dir = "../multiple_faces/"
     filename = "Japan.jpg" # another example: "ucsd.png"
     filepath = image_dir + filename
-    caffemodel = "../facenet_iter_400000.caffemodel"
+    caffemodel = "../facenet_iter_505000.caffemodel"
     model = "../facenet_deploy.prototxt"
 
     ###############
