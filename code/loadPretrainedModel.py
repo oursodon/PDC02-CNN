@@ -182,12 +182,34 @@ if __name__ == '__main__':
     # We may do that by an 'Connected Component' algorithm
     # In that algorithm, the decision of creating a new group may be done with euclidian distance or weights
 
-    for position in positions:
-        db = DBSCAN(eps=36, min_samples=10).fit(position)
-        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-        labels = db.labels_
-        print len(postion)
-        print len(labels)
+    db =  DBSCAN(eps=3, min_samples=15).fit(positions)
+
+    clusters = []
+    implot = plt.imshow(data,cmap = cm.Greys_r)
+    for k in np.unique(db.labels_):
+        clusters.append([])
+        members = np.where(db.labels_ == k)[0]
+        print members
+        if k == -1:
+            print("outliers:")
+        else:
+            print("cluster %d:" % k)
+            clusters[k] = [positions[i] for i in members]
+
+    colors = get_cmap(len(clusters))
+    for k in xrange(len(clusters)):
+            plt.scatter([pos[0] for pos in clusters[k]],[pos[1] for pos in clusters[k]],c=colors(k))
+    plt.show()
+
+
+#    for position in positions:
+#        db = DBSCAN(eps=36, min_samples=10).fit(position)
+#	labels = db.labels_
+#        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+#
+#        print len(postion)
+#        print len(labels)
+
     ### STEP 2 ###
 
     # generating local pyramid based on each centroid found in clustring algorithm
@@ -200,10 +222,11 @@ if __name__ == '__main__':
     ##############
 
     # Scatter plot for showing each postion on the given image
-    implot = plt.imshow(data,cmap = cm.Greys_r)
-    #colors = get_cmap(len(imageList))
-    #for pos in positions:
-        #plt.scatter(pos[0],pos[1],c=colors(pos[2]),)
-    for position in positions:
-        plt.scatter([pos[0] for pos in position],[pos[1] for pos in position])
-    plt.show()
+
+#    implot = plt.imshow(data,cmap = cm.Greys_r)
+#    #colors = get_cmap(len(imageList))
+#    #for pos in positions:
+#        #plt.scatter(pos[0],pos[1],c=colors(pos[2]),)
+#    for position in positions:
+#        plt.scatter([pos[0] for pos in position],[pos[1] for pos in position])
+#    plt.show()
