@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
     positions = processImage(imageList,downScale,net,threshold,window_length,step)
 
-    print  positions
+    #print  positions
     print "In total, there are "+str(len(positions))+" unique positions"
 
     ########################
@@ -181,8 +181,8 @@ if __name__ == '__main__':
     # We will plot this new centroids in plot actually
     # We may do that by an 'Connected Component' algorithm
     # In that algorithm, the decision of creating a new group may be done with euclidian distance or weights
-
-    db =  DBSCAN(eps=3, min_samples=15).fit(positions)
+    #db =  DBSCAN(eps=3, min_samples=15).fit(positions)
+    db =  DBSCAN(eps=3, min_samples=15).fit(positions)# why min_samples =10? because we take 'step' = 3 not 1
 
     clusters = []
     implot = plt.imshow(data,cmap = cm.Greys_r)
@@ -193,8 +193,10 @@ if __name__ == '__main__':
         if k == -1:
             print("outliers:")
         else:
-            print("cluster %d:" % k)
-            clusters[k] = [positions[i] for i in members]
+            #print("cluster %d:" % k)
+            # we find the centrum point with reduce() for x and y separetly
+            clusters[k] = [((reduce(lambda x,y: x+y,[positions[i][0] for i in members])/len(members)),\
+                    (reduce(lambda x,y: x+y,[positions[i][1] for i in members])/len(members)))]
 
     colors = get_cmap(len(clusters))
     for k in xrange(len(clusters)):
