@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 from sklearn.cluster import DBSCAN
+
 def get_cmap(N):
     '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
     RGB color.'''
@@ -23,6 +24,57 @@ def get_cmap(N):
     def map_index_to_rgb_color(index):
         return scalar_map.to_rgba(index)
     return map_index_to_rgb_color
+
+
+def getLocalPyramids(image,clusters,nb_scale,window_length):
+    """docstring for getLocalPyramids"""
+    localPyramids = []
+    scale_step = 0.1
+    for cluster in clusters:
+        x,y = cluster[0][0], cluster[0][1]
+        scales_length = np.arange(window_length, window_length+2*nb_scale, 2) # just zooming
+        cropped_list = []
+        for scale_length in scales_length:
+            # x and y are the centrum coordiantes
+            left, top = x-(scale_length/2), y-(scale_length/2)
+            cropped = image.crop((left,top,left+scale_length,top+scale_length))
+            cropped_list.append(cropped)
+        localPyramids.append(cropped_list)
+
+    return localPyramids # list of local pyramids
+
+
+def processLocalPyramid(localImageList,network,threshold_face,threshold_decision,window_length):
+    scores = []
+    for image in localImageList:
+        nb_iter = 0
+        nb_visages = 0
+        step = 1
+        width, height = image.size
+        for left in xrange(0, width-window_length+1, step):
+            for top in xrange(0, height-window_length+1, step):
+                nb_iter += 1
+                cropped = image.crop((left, top, left+window_length,\
+                        top+window_length))
+                cropped.load()
+                data = np.asarray(cropped)
+                img = data[:, :, np.newaxis]
+                img = skimage.img_as_float(img).astype(np.float32)
+                img = img.transpose((2,0,1))
+                network.blobs['data'].data[...] = img
+                out = network.forward()
+                if out['prob'][0][1]>threshold_face:
+                    nb_visages += 1
+        scores.append(nb_visages/float(nb_iter))
+    # deciding if it is an face-image or not
+
+    #print scores
+    for score in scores:
+        if score<threshold_decision:
+            return False
+
+    return True
+
 
 def getImagePyramid(image,downScale,window_length):
     # Nejat changed pyramid method because he needs an image instance in processImage() method
@@ -67,10 +119,6 @@ def processImage(imageList,downScale,network,threshold,window_length,step):
     ### OUTPUT ###
     # facesPosition: sorted and unique position list
 
-    #TODO Save face size
-
-    left_corner=0
-    top_corner=0
     facesPosition = []
     scale_degree= 0  # truc = 0
 
@@ -135,7 +183,7 @@ if __name__ == '__main__':
     window_length = 36
     step = 1 # for slicing window
     image_dir = "../multiple_faces/"
-    filename = "Japan.jpg" # another example: "ucsd.png"
+    filename = "ucsd.png" # another example: "ucsd.png"
     filepath = image_dir + filename
     caffemodel = "../facenet_iter_505000.caffemodel"
     model = "../facenet_deploy.prototxt"
@@ -177,40 +225,26 @@ if __name__ == '__main__':
 
     ### STEP 1 ###
 
-    # TODO clustering algorithm for finding the centroid of each dense group in positions
+    # clustering algorithm for finding the centroid of each dense group in positions
     # We will plot this new centroids in plot actually
     # We may do that by an 'Connected Component' algorithm
     # In that algorithm, the decision of creating a new group may be done with euclidian distance or weights
-    #db =  DBSCAN(eps=3, min_samples=15).fit(positions)
-    db =  DBSCAN(eps=3, min_samples=15).fit(positions)# why min_samples =10? because we take 'step' = 3 not 1
+
+    db =  DBSCAN(eps=3, min_samples=15).fit(positions)
 
     clusters = []
-    implot = plt.imshow(data,cmap = cm.Greys_r)
     for k in np.unique(db.labels_):
-        clusters.append([])
         members = np.where(db.labels_ == k)[0]
-        print members
+        #print members
         if k == -1:
             print("outliers:")
         else:
+            clusters.append([])
             #print("cluster %d:" % k)
             # we find the centrum point with reduce() for x and y separetly
             clusters[k] = [((reduce(lambda x,y: x+y,[positions[i][0] for i in members])/len(members)),\
                     (reduce(lambda x,y: x+y,[positions[i][1] for i in members])/len(members)))]
 
-    colors = get_cmap(len(clusters))
-    for k in xrange(len(clusters)):
-            plt.scatter([pos[0] for pos in clusters[k]],[pos[1] for pos in clusters[k]],c=colors(k))
-    plt.show()
-
-
-#    for position in positions:
-#        db = DBSCAN(eps=36, min_samples=10).fit(position)
-#	labels = db.labels_
-#        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-#
-#        print len(postion)
-#        print len(labels)
 
     ### STEP 2 ###
 
@@ -219,16 +253,31 @@ if __name__ == '__main__':
     # gathering scores of each local pyramid
     # deciding if there is a face or not in each local
 
+    nb_scale=3 # how many frame that we want to analyze
+    threshold_face = 0.66
+    threshold_decision = 0.6
+    localPyramids = getLocalPyramids(image, clusters,nb_scale,window_length)
+
+    #print clusters, len(clusters)
+    for index, localImageList in enumerate(localPyramids):
+        good = processLocalPyramid(localImageList,net,threshold_face,threshold_decision,window_length) #'step' will be 1
+        if not good:
+            clusters[index]=-1
+
+    #print clusters
+    # getting all index which is not -1 (a local face)
+    faces=[]
+    for index in xrange(len(clusters)):
+        if clusters[index] != -1:
+            faces.append(clusters[index])
+
     ##############
     #### PLOT ####
     ##############
 
-    # Scatter plot for showing each postion on the given image
+    implot = plt.imshow(data,cmap = cm.Greys_r)
+    colors = get_cmap(len(faces))
+    for k in xrange(len(faces)):
+        plt.scatter([pos[0] for pos in faces[k]],[pos[1] for pos in faces[k]],c=colors(k))
+    plt.show()
 
-#    implot = plt.imshow(data,cmap = cm.Greys_r)
-#    #colors = get_cmap(len(imageList))
-#    #for pos in positions:
-#        #plt.scatter(pos[0],pos[1],c=colors(pos[2]),)
-#    for position in positions:
-#        plt.scatter([pos[0] for pos in position],[pos[1] for pos in position])
-#    plt.show()
